@@ -72,7 +72,7 @@ function App() {
     <div className="App">
       <nav className="navbar">
         <div className="nav-left">
-          <img src='/minecraft-utilitys/logo.png' alt="Planet Logo" className="logo" />
+          <img src='/minecraft-utils/logo.png' alt="Planet Logo" className="logo" />
         </div>
         <div className="nav-right">
           <a 
