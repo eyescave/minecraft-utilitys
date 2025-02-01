@@ -122,6 +122,15 @@ function App() {
       </nav>
       {renderPage()}
       {showCopySuccess && <div className="copy-success">Copied successfully!</div>}
+      
+      <button 
+        className="discord-button" 
+        onClick={() => window.open("https://discord.gg/JRPD84jw5z", "_blank")}
+      >
+        <img src="/discord-icon.png" alt="Discord" />
+        <span>Join Discord</span>
+      </button>
+      
     </div>
   );
 }

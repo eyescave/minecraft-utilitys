@@ -17,6 +17,7 @@ function SkriptSnippets() {
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('isAdmin') === 'true';
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const ADMIN_PASSWORD = "!6_-T3#}<QoxAY£Kybh9";
 
@@ -84,10 +85,19 @@ function SkriptSnippets() {
     }
   }, [snippets]);
 
-  // Add a refresh button to manually sync snippets
+  // Modify the handleRefresh function
   const handleRefresh = async () => {
-    const fetchedSnippets = await fetchSnippets();
-    setSnippets(fetchedSnippets);
+    if (isRefreshing) return; // Prevent multiple refreshes
+    
+    setIsRefreshing(true);
+    try {
+      const fetchedSnippets = await fetchSnippets();
+      setSnippets(fetchedSnippets);
+    } catch (error) {
+      console.error('Error refreshing snippets:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const filteredSnippets = snippets.filter(snippet =>
@@ -195,9 +205,10 @@ function SkriptSnippets() {
               className="search-input"
             />
             <button 
-              className="refresh-btn"
+              className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
               onClick={handleRefresh}
               title="Refresh snippets"
+              disabled={isRefreshing}
             >
               ↻
             </button>
