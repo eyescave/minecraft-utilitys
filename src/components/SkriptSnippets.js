@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/SkriptSnippets.css';
-import { database } from '../firebase-config';
-import { ref, onValue, push, remove } from 'firebase/database';
+import { fetchSnippets, saveSnippets } from '../utils/snippetsAPI';
 
 function SkriptSnippets() {
   const [snippets, setSnippets] = useState(() => {
-    // Initialize state with data from localStorage
     const savedSnippets = localStorage.getItem('skriptSnippets');
     return savedSnippets ? JSON.parse(savedSnippets) : [];
   });
@@ -17,65 +15,27 @@ function SkriptSnippets() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(() => {
-    // Initialize admin state from localStorage
     return localStorage.getItem('isAdmin') === 'true';
   });
 
   const ADMIN_PASSWORD = "!6_-T3#}<QoxAY£Kybh9";
 
-  // Memoize the save functions to prevent unnecessary re-renders
-  const saveSnippets = useCallback(() => {
-    localStorage.setItem('skriptSnippets', JSON.stringify(snippets));
-  }, [snippets]);
-
-  const saveAdminState = useCallback(() => {
-    localStorage.setItem('isAdmin', isAdmin);
-  }, [isAdmin]);
+  // Load initial snippets
+  useEffect(() => {
+    const loadSnippets = async () => {
+      const fetchedSnippets = await fetchSnippets();
+      if (fetchedSnippets.length > 0) {
+        setSnippets(fetchedSnippets);
+        saveSnippets(fetchedSnippets);
+      }
+    };
+    loadSnippets();
+  }, []);
 
   // Save snippets to localStorage whenever they change
   useEffect(() => {
-    saveSnippets();
-  }, [saveSnippets]);
-
-  // Save admin state to localStorage
-  useEffect(() => {
-    saveAdminState();
-  }, [saveAdminState]);
-
-  // Add event listener for page unload
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      saveSnippets();
-      saveAdminState();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [saveSnippets, saveAdminState]);
-
-  // Replace the localStorage initialization with Firebase
-  useEffect(() => {
-    const snippetsRef = ref(database, 'snippets');
-    const unsubscribe = onValue(snippetsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert the object to array and set the snippets
-        const snippetsArray = Object.entries(data).map(([key, value]) => ({
-          ...value,
-          firebaseKey: key
-        }));
-        setSnippets(snippetsArray);
-      } else {
-        setSnippets([]);
-      }
-    });
-
-    // Cleanup subscription
-    return () => unsubscribe();
-  }, []);
+    saveSnippets(snippets);
+  }, [snippets]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value.toLowerCase());
@@ -92,33 +52,32 @@ function SkriptSnippets() {
     }
   };
 
-  // Modify handleSubmit to save to Firebase
   const handleSubmit = (e) => {
     e.preventDefault();
     const timestamp = new Date().getTime();
-    const tagsArray = newSnippet.tags.split(',').map(tag => tag.trim());
+    const tagsArray = newSnippet.tags.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag !== '');
     
     const newSnippetWithMetadata = {
+      id: timestamp,
       title: newSnippet.title,
       code: newSnippet.code,
       tags: tagsArray,
       createdAt: timestamp
     };
     
-    // Push the new snippet to Firebase
-    const snippetsRef = ref(database, 'snippets');
-    push(snippetsRef, newSnippetWithMetadata);
-    
+    setSnippets(prevSnippets => [...prevSnippets, newSnippetWithMetadata]);
     setNewSnippet({ title: '', code: '', tags: '' });
     setShowAddForm(false);
   };
 
-  // Modify handleDeleteSnippet to delete from Firebase
-  const handleDeleteSnippet = useCallback((snippet, e) => {
+  const handleDeleteSnippet = useCallback((snippetId, e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this snippet?')) {
-      const snippetRef = ref(database, `snippets/${snippet.firebaseKey}`);
-      remove(snippetRef);
+      setSnippets(prevSnippets => 
+        prevSnippets.filter(snippet => snippet.id !== snippetId)
+      );
     }
   }, []);
 
@@ -202,7 +161,7 @@ function SkriptSnippets() {
               {isAdmin && (
                 <button 
                   className="delete-btn"
-                  onClick={(e) => handleDeleteSnippet(selectedSnippet, e)}
+                  onClick={(e) => handleDeleteSnippet(selectedSnippet.id, e)}
                 >
                   Delete
                 </button>
@@ -270,7 +229,7 @@ function SkriptSnippets() {
                 {isAdmin && (
                   <button 
                     className="delete-btn card-delete"
-                    onClick={(e) => handleDeleteSnippet(snippet, e)}
+                    onClick={(e) => handleDeleteSnippet(snippet.id, e)}
                   >
                     ×
                   </button>
