@@ -272,4 +272,17 @@
   margin-top: 1rem;
   border-top: 1px solid #2a2a2a;
   padding-top: 1rem;
+}
+
+.refresh-btn {
+  position: static;
+  background-color: #2a2a2a;
+  padding: 0.5rem 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.refresh-btn:hover {
+  transform: rotate(180deg);
 } 

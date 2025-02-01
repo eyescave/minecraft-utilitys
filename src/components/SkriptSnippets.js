@@ -52,7 +52,7 @@ function SkriptSnippets() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const timestamp = new Date().getTime();
     const tagsArray = newSnippet.tags.split(',')
@@ -67,19 +67,28 @@ function SkriptSnippets() {
       createdAt: timestamp
     };
     
-    setSnippets(prevSnippets => [...prevSnippets, newSnippetWithMetadata]);
+    const updatedSnippets = [...snippets, newSnippetWithMetadata];
+    setSnippets(updatedSnippets);
+    await saveSnippets(updatedSnippets);
+    
     setNewSnippet({ title: '', code: '', tags: '' });
     setShowAddForm(false);
   };
 
-  const handleDeleteSnippet = useCallback((snippetId, e) => {
+  const handleDeleteSnippet = useCallback(async (snippetId, e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this snippet?')) {
-      setSnippets(prevSnippets => 
-        prevSnippets.filter(snippet => snippet.id !== snippetId)
-      );
+      const updatedSnippets = snippets.filter(snippet => snippet.id !== snippetId);
+      setSnippets(updatedSnippets);
+      await saveSnippets(updatedSnippets);
     }
-  }, []);
+  }, [snippets]);
+
+  // Add a refresh button to manually sync snippets
+  const handleRefresh = async () => {
+    const fetchedSnippets = await fetchSnippets();
+    setSnippets(fetchedSnippets);
+  };
 
   const filteredSnippets = snippets.filter(snippet =>
     snippet.title.toLowerCase().includes(searchTerm) ||
@@ -185,6 +194,13 @@ function SkriptSnippets() {
               onChange={handleSearch}
               className="search-input"
             />
+            <button 
+              className="refresh-btn"
+              onClick={handleRefresh}
+              title="Refresh snippets"
+            >
+              ↻
+            </button>
             <button 
               className="add-snippet-btn"
               onClick={() => setShowAddForm(!showAddForm)}
