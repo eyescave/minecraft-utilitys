@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/SkriptSnippets.css';
+import { database } from '../firebase-config';
+import { ref, onValue, push, remove } from 'firebase/database';
 
 function SkriptSnippets() {
   const [snippets, setSnippets] = useState(() => {
@@ -54,6 +56,27 @@ function SkriptSnippets() {
     };
   }, [saveSnippets, saveAdminState]);
 
+  // Replace the localStorage initialization with Firebase
+  useEffect(() => {
+    const snippetsRef = ref(database, 'snippets');
+    const unsubscribe = onValue(snippetsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert the object to array and set the snippets
+        const snippetsArray = Object.entries(data).map(([key, value]) => ({
+          ...value,
+          firebaseKey: key
+        }));
+        setSnippets(snippetsArray);
+      } else {
+        setSnippets([]);
+      }
+    });
+
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, []);
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value.toLowerCase());
   };
@@ -69,12 +92,33 @@ function SkriptSnippets() {
     }
   };
 
-  const handleDeleteSnippet = useCallback((snippetId, e) => {
+  // Modify handleSubmit to save to Firebase
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const timestamp = new Date().getTime();
+    const tagsArray = newSnippet.tags.split(',').map(tag => tag.trim());
+    
+    const newSnippetWithMetadata = {
+      title: newSnippet.title,
+      code: newSnippet.code,
+      tags: tagsArray,
+      createdAt: timestamp
+    };
+    
+    // Push the new snippet to Firebase
+    const snippetsRef = ref(database, 'snippets');
+    push(snippetsRef, newSnippetWithMetadata);
+    
+    setNewSnippet({ title: '', code: '', tags: '' });
+    setShowAddForm(false);
+  };
+
+  // Modify handleDeleteSnippet to delete from Firebase
+  const handleDeleteSnippet = useCallback((snippet, e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this snippet?')) {
-      setSnippets(prevSnippets => 
-        prevSnippets.filter(snippet => snippet.id !== snippetId)
-      );
+      const snippetRef = ref(database, `snippets/${snippet.firebaseKey}`);
+      remove(snippetRef);
     }
   }, []);
 
@@ -87,24 +131,6 @@ function SkriptSnippets() {
     e.stopPropagation();
     navigator.clipboard.writeText(code);
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const timestamp = new Date().getTime();
-    const tagsArray = newSnippet.tags.split(',').map(tag => tag.trim());
-    
-    const newSnippetWithMetadata = {
-      id: timestamp,
-      title: newSnippet.title,
-      code: newSnippet.code,
-      tags: tagsArray,
-      createdAt: timestamp
-    };
-    
-    setSnippets(prevSnippets => [...prevSnippets, newSnippetWithMetadata]);
-    setNewSnippet({ title: '', code: '', tags: '' });
-    setShowAddForm(false);
-  };
 
   const getCodePreview = useCallback((code) => {
     const lines = code.split('\n');
@@ -176,7 +202,7 @@ function SkriptSnippets() {
               {isAdmin && (
                 <button 
                   className="delete-btn"
-                  onClick={(e) => handleDeleteSnippet(selectedSnippet.id, e)}
+                  onClick={(e) => handleDeleteSnippet(selectedSnippet, e)}
                 >
                   Delete
                 </button>
@@ -244,7 +270,7 @@ function SkriptSnippets() {
                 {isAdmin && (
                   <button 
                     className="delete-btn card-delete"
-                    onClick={(e) => handleDeleteSnippet(snippet.id, e)}
+                    onClick={(e) => handleDeleteSnippet(snippet, e)}
                   >
                     ×
                   </button>
