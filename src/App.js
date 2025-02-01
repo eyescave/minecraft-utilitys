@@ -2,6 +2,7 @@ import './App.css';
 import { useState } from 'react';
 import GradientGenerator from './components/GradientGenerator';
 import ColorPalette from './components/ColorPalette';
+import SkriptSnippets from './components/SkriptSnippets';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('converter');
@@ -63,6 +64,8 @@ function App() {
         return <GradientGenerator />;
       case 'palette':
         return <ColorPalette />;
+      case 'snippets':
+        return <SkriptSnippets />;
       default:
         return <div>Page not found</div>;
     }
@@ -104,6 +107,16 @@ function App() {
             }}
           >
             Colour Palette
+          </a>
+          <a 
+            href="#" 
+            className={`nav-item ${currentPage === 'snippets' ? 'active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              setCurrentPage('snippets');
+            }}
+          >
+            Skript Snippets
           </a>
         </div>
       </nav>

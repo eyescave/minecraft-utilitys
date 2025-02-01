@@ -1,8 +1,18 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #111111;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #111111;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .navbar {
@@ -168,17 +178,60 @@ button:hover {
   .navbar {
     flex-direction: column;
     padding: 1rem;
+    height: auto;
   }
 
   .nav-right {
     margin-top: 1rem;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .nav-item {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    text-align: center;
+    width: calc(33.33% - 0.5rem);
+    white-space: nowrap;
   }
 
   .converter-container {
-    margin-top: 120px;
+    margin-top: 140px;
+    padding: 1rem;
+  }
+
+  .text-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .input-section, .output-section {
+    width: 100%;
+  }
+
+  textarea {
+    height: 200px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .nav-item {
+    width: 100%;
+  }
+
+  .converter-container {
+    margin-top: 180px;
   }
 }
 
