@@ -1,5 +1,5 @@
 const BIN_ID = '679e0a2cacd3cb34a8d67e73'; // You'll get this after creating a bin
-const API_KEY = process.env.REACT_APP_JSONBIN_API_KEY; // Get this from JSONBin.io
+const API_KEY = '$2a$10$PvDAlZlOuGGbTAymGh8OOuDPZw4y1eEQaNv6RsPPomSB.yO.JgjXO'; // Get this from JSONBin.io
 const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 // Add a debounce timer

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/SkriptSnippets.css';
 import { fetchSnippets, saveSnippets } from '../utils/snippetsAPI';
-import { verifyAdmin, checkAuthToken } from '../utils/auth';
 
 function SkriptSnippets() {
   const [snippets, setSnippets] = useState(() => {
@@ -13,9 +12,6 @@ function SkriptSnippets() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedSnippet, setSelectedSnippet] = useState(null);
   const [newSnippet, setNewSnippet] = useState({ title: '', code: '', tags: '' });
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [isAdmin, setIsAdmin] = useState(() => checkAuthToken());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load initial snippets
@@ -37,20 +33,6 @@ function SkriptSnippets() {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value.toLowerCase());
-  };
-
-  const handleAdminLogin = async (e) => {
-    e.preventDefault();
-    const token = await verifyAdmin(adminPassword);
-    
-    if (token) {
-      sessionStorage.setItem('adminToken', token);
-      setIsAdmin(true);
-      setShowAdminLogin(false);
-      setAdminPassword('');
-    } else {
-      alert('Authentication failed');
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -76,14 +58,6 @@ function SkriptSnippets() {
     setShowAddForm(false);
   };
 
-  const handleDeleteSnippet = useCallback(async (snippetId, e) => {
-    e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this snippet?')) {
-      const updatedSnippets = snippets.filter(snippet => snippet.id !== snippetId);
-      setSnippets(updatedSnippets);
-      await saveSnippets(updatedSnippets);
-    }
-  }, [snippets]);
 
   // Modify the handleRefresh function
   const handleRefresh = async () => {
@@ -121,37 +95,6 @@ function SkriptSnippets() {
 
   return (
     <div className="snippets-container">
-      <div 
-        className="admin-trigger"
-        onClick={() => setShowAdminLogin(true)}
-      />
-
-      {showAdminLogin && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal">
-            <button 
-              className="close-modal"
-              onClick={() => {
-                setShowAdminLogin(false);
-                setAdminPassword('');
-              }}
-            >
-              ×
-            </button>
-            <h3>Admin Login</h3>
-            <form onSubmit={handleAdminLogin}>
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="Enter admin password"
-              />
-              <button type="submit">Login</button>
-            </form>
-          </div>
-        </div>
-      )}
-
       {selectedSnippet ? (
         <div className="full-snippet-view">
           <button 
@@ -170,22 +113,12 @@ function SkriptSnippets() {
                 <span key={index} className="tag">#{tag}</span>
               ))}
             </div>
-            <div className="button-group">
-              <button 
-                className="copy-btn"
-                onClick={(e) => handleCopy(selectedSnippet.code, e)}
-              >
-                Copy Code
-              </button>
-              {isAdmin && (
-                <button 
-                  className="delete-btn"
-                  onClick={(e) => handleDeleteSnippet(selectedSnippet.id, e)}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
+            <button 
+              className="copy-btn"
+              onClick={(e) => handleCopy(selectedSnippet.code, e)}
+            >
+              Copy Code
+            </button>
           </div>
           <div className="snippet-date">
             Added: {new Date(selectedSnippet.createdAt).toLocaleDateString()}
@@ -253,14 +186,6 @@ function SkriptSnippets() {
                 onClick={() => setSelectedSnippet(snippet)}
               >
                 <h3>{snippet.title}</h3>
-                {isAdmin && (
-                  <button 
-                    className="delete-btn card-delete"
-                    onClick={(e) => handleDeleteSnippet(snippet.id, e)}
-                  >
-                    ×
-                  </button>
-                )}
                 <pre className="code-block preview">
                   <code>{getCodePreview(snippet.code)}</code>
                 </pre>
