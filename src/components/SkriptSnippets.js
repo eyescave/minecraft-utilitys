@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/SkriptSnippets.css';
 import { fetchSnippets, saveSnippets } from '../utils/snippetsAPI';
+import { verifyAdmin, checkAuthToken } from '../utils/auth';
 
 function SkriptSnippets() {
   const [snippets, setSnippets] = useState(() => {
@@ -14,12 +15,8 @@ function SkriptSnippets() {
   const [newSnippet, setNewSnippet] = useState({ title: '', code: '', tags: '' });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('isAdmin') === 'true';
-  });
+  const [isAdmin, setIsAdmin] = useState(() => checkAuthToken());
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const ADMIN_PASSWORD = "!6_-T3#}<QoxAY£Kybh9";
 
   // Load initial snippets
   useEffect(() => {
@@ -42,14 +39,17 @@ function SkriptSnippets() {
     setSearchTerm(e.target.value.toLowerCase());
   };
 
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
-    if (adminPassword === ADMIN_PASSWORD) {
+    const token = await verifyAdmin(adminPassword);
+    
+    if (token) {
+      sessionStorage.setItem('adminToken', token);
       setIsAdmin(true);
       setShowAdminLogin(false);
       setAdminPassword('');
     } else {
-      alert('Incorrect password');
+      alert('Authentication failed');
     }
   };
 
