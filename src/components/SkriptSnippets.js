@@ -16,6 +16,7 @@ function SkriptSnippets() {
   const [password, setPassword] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Load initial snippets
   useEffect(() => {
@@ -99,6 +100,8 @@ function SkriptSnippets() {
           setSnippets(snippets.filter(snippet => snippet.id !== id));
           setShowPasswordInput(false);
           setPassword('');
+          setShowSuccessMessage(true);
+          setTimeout(() => setShowSuccessMessage(false), 3000);
         } else {
           console.error('Failed to delete snippet');
         }
@@ -131,6 +134,9 @@ function SkriptSnippets() {
 
   return (
     <div className="snippets-container">
+      {showSuccessMessage && (
+        <div className="success-message">Snippet deleted successfully!</div>
+      )}
       {selectedSnippet ? (
         <div className="full-snippet-view">
           <button 
