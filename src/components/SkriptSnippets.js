@@ -13,6 +13,9 @@ function SkriptSnippets() {
   const [selectedSnippet, setSelectedSnippet] = useState(null);
   const [newSnippet, setNewSnippet] = useState({ title: '', code: '', tags: '' });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
 
   // Load initial snippets
   useEffect(() => {
@@ -58,8 +61,6 @@ function SkriptSnippets() {
     setShowAddForm(false);
   };
 
-
-  // Modify the handleRefresh function
   const handleRefresh = async () => {
     if (isRefreshing) return; // Prevent multiple refreshes
     
@@ -71,6 +72,41 @@ function SkriptSnippets() {
       console.error('Error refreshing snippets:', error);
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch('/api/validate-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        // If password is valid, proceed to delete the snippet
+        const deleteResponse = await fetch(`/api/snippets/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer YOUR_SECRET_TOKEN', // Use your secret token
+          },
+        });
+
+        if (deleteResponse.ok) {
+          setSnippets(snippets.filter(snippet => snippet.id !== id));
+          setShowPasswordInput(false);
+          setPassword('');
+        } else {
+          console.error('Failed to delete snippet');
+        }
+      } else {
+        console.error('Invalid password');
+      }
+    } catch (error) {
+      console.error('Error deleting snippet:', error);
     }
   };
 
@@ -92,25 +128,6 @@ function SkriptSnippets() {
 
   // Sort snippets by creation date (newest first)
   const sortedSnippets = [...filteredSnippets].sort((a, b) => b.createdAt - a.createdAt);
-
-  const handleDelete = async (id) => {
-    try {
-        const response = await fetch(`/api/snippets/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer YOUR_SECRET_TOKEN' // Use your secret token
-            }
-        });
-        if (response.ok) {
-            setSnippets(snippets.filter(snippet => snippet.id !== id));
-        } else {
-            console.error('Failed to delete snippet');
-        }
-    } catch (error) {
-        console.error('Error deleting snippet:', error);
-    }
-  };
 
   return (
     <div className="snippets-container">
@@ -138,10 +155,30 @@ function SkriptSnippets() {
             >
               Copy Code
             </button>
+            <button 
+              className="delete-btn"
+              onClick={() => {
+                setShowPasswordInput(true);
+              }}
+            >
+              Delete Snippet
+            </button>
           </div>
           <div className="snippet-date">
             Added: {new Date(selectedSnippet.createdAt).toLocaleDateString()}
           </div>
+          {showPasswordInput && (
+            <div className="password-input">
+              <input
+                type="password"
+                placeholder="Enter password to delete"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button onClick={() => handleDelete(selectedSnippet.id)}>Confirm Delete</button>
+              <button onClick={() => setShowPasswordInput(false)}>Cancel</button>
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -219,15 +256,6 @@ function SkriptSnippets() {
                     onClick={(e) => handleCopy(snippet.code, e)}
                   >
                     Copy Code
-                  </button>
-                  <button 
-                    className="delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(snippet.id);
-                    }}
-                  >
-                    Delete Snippet
                   </button>
                 </div>
                 <div className="snippet-date">
