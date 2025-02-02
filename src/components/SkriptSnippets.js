@@ -93,6 +93,25 @@ function SkriptSnippets() {
   // Sort snippets by creation date (newest first)
   const sortedSnippets = [...filteredSnippets].sort((a, b) => b.createdAt - a.createdAt);
 
+  const handleDelete = async (id) => {
+    try {
+        const response = await fetch(`/api/snippets/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer YOUR_SECRET_TOKEN' // Use your secret token
+            }
+        });
+        if (response.ok) {
+            setSnippets(snippets.filter(snippet => snippet.id !== id));
+        } else {
+            console.error('Failed to delete snippet');
+        }
+    } catch (error) {
+        console.error('Error deleting snippet:', error);
+    }
+  };
+
   return (
     <div className="snippets-container">
       {selectedSnippet ? (
@@ -200,6 +219,15 @@ function SkriptSnippets() {
                     onClick={(e) => handleCopy(snippet.code, e)}
                   >
                     Copy Code
+                  </button>
+                  <button 
+                    className="delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(snippet.id);
+                    }}
+                  >
+                    Delete Snippet
                   </button>
                 </div>
                 <div className="snippet-date">

@@ -217,4 +217,17 @@
 
 .refresh-btn:not(:disabled):hover {
   transform: rotate(180deg);
+}
+
+.delete-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #ff1a1a;
 } 
