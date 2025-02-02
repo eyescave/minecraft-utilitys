@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import '../styles/SkriptSnippets.css';
 import { fetchSnippets, saveSnippets } from '../utils/snippetsAPI';
 
@@ -18,6 +18,7 @@ function SkriptSnippets() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [copyMessage, setCopyMessage] = useState('');
   const [copySuccessMessage, setCopySuccessMessage] = useState('');
+  const [sortOption, setSortOption] = useState('date');
 
   const VALID_PASSWORD = '!6_-T3#}<QoxAY£Kybh9'; // Move the password to the frontend
 
@@ -94,10 +95,25 @@ function SkriptSnippets() {
     setTimeout(() => setShowSuccessMessage(false), 3000);
   };
 
-  const filteredSnippets = snippets.filter(snippet =>
-    snippet.title.toLowerCase().includes(searchTerm) ||
-    snippet.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-  );
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
+  };
+
+  const sortedSnippets = useMemo(() => {
+    const filteredSnippets = snippets.filter(snippet =>
+      snippet.title.toLowerCase().includes(searchTerm) ||
+      snippet.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+    );
+
+    return [...filteredSnippets].sort((a, b) => {
+      if (sortOption === 'date') {
+        return b.createdAt - a.createdAt; // Sort by date created (newest first)
+      } else if (sortOption === 'copies') {
+        return (b.copyCount || 0) - (a.copyCount || 0); // Sort by number of copies
+      }
+      return 0; // Default case
+    });
+  }, [snippets, searchTerm, sortOption]);
 
   const handleCopy = useCallback(async (snippet, e) => {
     e.stopPropagation();
@@ -133,9 +149,6 @@ function SkriptSnippets() {
     if (lines.length <= 3) return code;
     return lines.slice(0, 3).join('\n') + '\n...';
   }, []);
-
-  // Sort snippets by creation date (newest first)
-  const sortedSnippets = [...filteredSnippets].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
     <div className="snippets-container">
@@ -210,6 +223,10 @@ function SkriptSnippets() {
               onChange={handleSearch}
               className="search-input"
             />
+            <select value={sortOption} onChange={handleSortChange} className="sort-select">
+              <option value="date">Sort by Date Created</option>
+              <option value="copies">Sort by Number of Copies</option>
+            </select>
             <button 
               className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
               onClick={handleRefresh}
