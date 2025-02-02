@@ -8,16 +8,6 @@ app.use(cors());
 app.use(bodyParser.json());
 
 let snippets = []; // This should be replaced with your database logic
-const VALID_PASSWORD = 'your_secure_password'; // Set your secure password here
-
-// Endpoint to validate password
-app.post('/api/validate-password', (req, res) => {
-    const { password } = req.body;
-    if (password === VALID_PASSWORD) {
-        return res.status(200).json({ message: 'Password is valid' });
-    }
-    return res.status(403).json({ message: 'Invalid password' });
-});
 
 // Endpoint to delete a snippet
 app.delete('/api/snippets/:id', (req, res) => {

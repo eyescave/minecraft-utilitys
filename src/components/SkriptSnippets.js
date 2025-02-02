@@ -14,9 +14,10 @@ function SkriptSnippets() {
   const [newSnippet, setNewSnippet] = useState({ title: '', code: '', tags: '' });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [password, setPassword] = useState('');
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  const VALID_PASSWORD = '!6_-T3#}<QoxAY£Kybh9'; // Move the password to the frontend
 
   // Load initial snippets
   useEffect(() => {
@@ -77,40 +78,18 @@ function SkriptSnippets() {
   };
 
   const handleDelete = async (id) => {
-    try {
-      const response = await fetch('/api/validate-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      if (response.ok) {
-        // If password is valid, proceed to delete the snippet
-        const deleteResponse = await fetch(`/api/snippets/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer YOUR_SECRET_TOKEN', // Use your secret token
-          },
-        });
-
-        if (deleteResponse.ok) {
-          setSnippets(snippets.filter(snippet => snippet.id !== id));
-          setShowPasswordInput(false);
-          setPassword('');
-          setShowSuccessMessage(true);
-          setTimeout(() => setShowSuccessMessage(false), 3000);
-        } else {
-          console.error('Failed to delete snippet');
-        }
-      } else {
-        console.error('Invalid password');
-      }
-    } catch (error) {
-      console.error('Error deleting snippet:', error);
+    if (password !== VALID_PASSWORD) {
+      console.error('Invalid password');
+      alert('Invalid password. Please try again.'); // Notify user of invalid password
+      return;
     }
+
+    // If password is valid, proceed to delete the snippet
+    setSnippets(snippets.filter(snippet => snippet.id !== id));
+    setShowPasswordInput(false);
+    setPassword('');
+    setShowSuccessMessage(true);
+    setTimeout(() => setShowSuccessMessage(false), 3000);
   };
 
   const filteredSnippets = snippets.filter(snippet =>
@@ -243,7 +222,7 @@ function SkriptSnippets() {
           <div className="snippets-grid">
             {sortedSnippets.map(snippet => (
               <div 
-                key={snippet.id} 
+                key={snippet.id}
                 className="snippet-card"
                 onClick={() => setSelectedSnippet(snippet)}
               >
