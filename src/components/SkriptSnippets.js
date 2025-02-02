@@ -16,6 +16,8 @@ function SkriptSnippets() {
   const [password, setPassword] = useState('');
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [copyMessage, setCopyMessage] = useState('');
+  const [copySuccessMessage, setCopySuccessMessage] = useState('');
 
   const VALID_PASSWORD = '!6_-T3#}<QoxAY£Kybh9'; // Move the password to the frontend
 
@@ -97,10 +99,34 @@ function SkriptSnippets() {
     snippet.tags.some(tag => tag.toLowerCase().includes(searchTerm))
   );
 
-  const handleCopy = useCallback((code, e) => {
+  const handleCopy = useCallback(async (snippet, e) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(code);
-  }, []);
+    
+    // Check if the copy action is allowed
+    if (snippet.copyDelay && Date.now() < snippet.copyDelay) {
+        setCopyMessage('Please wait to register another copy.');
+        setTimeout(() => setCopyMessage(''), 3000); // Clear message after 3 seconds
+        return;
+    }
+
+    // Copy the code to clipboard
+    await navigator.clipboard.writeText(snippet.code);
+    
+    // Update the copy count and set the delay
+    const updatedSnippet = {
+        ...snippet,
+        copyCount: (snippet.copyCount || 0) + 1,
+        copyDelay: Date.now() + 60000 // 1 minute delay
+    };
+
+    // Update snippets state
+    setSnippets(snippets.map(s => s.id === snippet.id ? updatedSnippet : s));
+    await saveSnippets(snippets.map(s => s.id === snippet.id ? updatedSnippet : s));
+
+    // Set success message
+    setCopySuccessMessage('Snippet copied successfully!');
+    setTimeout(() => setCopySuccessMessage(''), 3000); // Clear message after 3 seconds
+  }, [snippets]);
 
   const getCodePreview = useCallback((code) => {
     const lines = code.split('\n');
@@ -115,6 +141,12 @@ function SkriptSnippets() {
     <div className="snippets-container">
       {showSuccessMessage && (
         <div className="success-message">Snippet deleted successfully!</div>
+      )}
+      {copyMessage && (
+        <div className="copy-message">{copyMessage}</div>
+      )}
+      {copySuccessMessage && (
+        <div className="copy-success">{copySuccessMessage}</div>
       )}
       {selectedSnippet ? (
         <div className="full-snippet-view">
@@ -136,7 +168,7 @@ function SkriptSnippets() {
             </div>
             <button 
               className="copy-btn"
-              onClick={(e) => handleCopy(selectedSnippet.code, e)}
+              onClick={(e) => handleCopy(selectedSnippet, e)}
             >
               Copy Code
             </button>
@@ -238,10 +270,11 @@ function SkriptSnippets() {
                   </div>
                   <button 
                     className="copy-btn"
-                    onClick={(e) => handleCopy(snippet.code, e)}
+                    onClick={(e) => handleCopy(snippet, e)}
                   >
                     Copy Code
                   </button>
+                  <span className="copy-count">{snippet.copyCount || 0} copies</span>
                 </div>
                 <div className="snippet-date">
                   {new Date(snippet.createdAt).toLocaleDateString()}
