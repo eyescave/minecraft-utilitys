@@ -20,7 +20,6 @@ function SkriptSnippets() {
   const [copySuccessMessage, setCopySuccessMessage] = useState('');
   const [sortOption, setSortOption] = useState('date');
 
-  const VALID_PASSWORD = '!6_-T3#}<QoxAY£Kybh9'; // Move the password to the frontend
 
   // Load initial snippets
   useEffect(() => {
@@ -81,18 +80,23 @@ function SkriptSnippets() {
   };
 
   const handleDelete = async (id) => {
-    if (password !== VALID_PASSWORD) {
-      console.error('Invalid password');
-      alert('Invalid password. Please try again.'); // Notify user of invalid password
-      return;
-    }
+    // Remove password check from frontend
+    const response = await fetch(`/api/snippets/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }), // Send password to backend
+    });
 
-    // If password is valid, proceed to delete the snippet
-    setSnippets(snippets.filter(snippet => snippet.id !== id));
-    setShowPasswordInput(false);
-    setPassword('');
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+    if (response.ok) {
+        setSnippets(snippets.filter(snippet => snippet.id !== id));
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+    } else {
+        const errorData = await response.json();
+        alert(errorData.message); // Notify user of invalid password
+    }
   };
 
   const handleSortChange = (e) => {
